@@ -1,2 +1,2 @@
-# micro1
-MICRO-1 - a processor architecture for (ancient) microprogramming - simulator and related tools 
+# MICRO-1
+A processor architecture for (ancient) microprogramming - simulator and related tools 
