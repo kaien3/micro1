@@ -10,6 +10,8 @@
  *                     Ver. 2.0  1985.4
  *      by H.SAITO     Ver. 2.1  1986.5
  */
+//#define DEBUG
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -340,6 +342,7 @@ fetch_decode()
     }
     else {
         error(ErrOutOfCMAddrLimit);
+        CMDR = -1;
     }
 
     /* extract each field */
@@ -353,6 +356,11 @@ fetch_decode()
     TSF = (CMDR >> 13) & 0x7;   /* bit 15-13 */
     EXF = (CMDR >>  9) & 0xf;   /* bit 12-9  */
     LTF = (CMDR >>  0) & 0x1ff; /* bit  8-0  */
+#ifdef  DEBUG
+    printf("CMAR:%03X LBF=%X RBF=%X ALF=%X SHF=%X SBF=%X"
+           " MMF=%X SQF=%X TSF=%X EXF=%X LTF=%X\n",
+           CMAR, LBF, RBF, ALF, SHF, SBF, MMF, SQF, TSF, EXF, LTF);
+#endif
 }
 
 
@@ -474,10 +482,10 @@ exec_LBF()
         LBUS = R[LBF];
         break;
     case 8:     /* RB */
-        LBUS = R[((IR >> 8) & 7)];
+        LBUS = R[((IR >> 8) & 3)];
         break;
     case 9:     /* RBP */
-        LBUS = R[((IR >> 8) & 7) + 1];
+        LBUS = R[((IR >> 8) & 3) + 1];
         break;
     case 10:    /* PC */
         LBUS = PC;
@@ -530,10 +538,10 @@ exec_RBF()
         RBUS = R[RBF];
         break;
     case 8:     /* RA */
-        RBUS = R[((IR >> 10) & 7)];
+        RBUS = R[((IR >> 10) & 3)];
         break;
     case 9:     /* RAP */
-        RBUS = R[((IR >> 10) & 7) + 1];
+        RBUS = R[((IR >> 10) & 3) + 1];
         break;
     case 10:    /* SLT */
         RBUS = LTF;
@@ -575,9 +583,14 @@ ADDOp()
     }
 
     ABUS = LBUS + RBUS + CIN;
+#ifdef  DEBUG
+    printf("ADDOp: LBUS=%x RBUS=%x CIN=%d => ABUS=%x\n",
+           LBUS, RBUS, CIN, ABUS);
+#endif
 
     /* OV */
-    OV = ((LBUS & RBUS & ~ABUS & 0x8000) | (~LBUS & ~RBUS & ABUS & 0x8000))? MTRUE: MFALSE;
+    OV = ((LBUS & RBUS & ~ABUS & 0x8000) | (~LBUS & ~RBUS & ABUS & 0x8000))?
+        MTRUE: MFALSE;
     /* CRY */
     CRY = CIN? MTRUE: MFALSE;
     /* ZER */
@@ -596,13 +609,17 @@ SUBOp()
         CIN = CRY? 1: 0;
     }
     else if (EXF == 3) {        /* AS1 */
-        CIN = 0;        /* CIN = 1 ? */
+        CIN = 1;
     }
     else {
-        CIN = 1;        /* CIN = 0 ? */
+        CIN = 0;
     }
 
     ABUS = LBUS - RBUS - CIN;
+#ifdef  DEBUG
+    printf("SUBOp: LBUS=%x RBUS=%x CIN=%d => ABUS=%x\n",
+           LBUS, RBUS, CIN, ABUS);
+#endif
 
     /* OV */
     OV = ((LBUS & ~RBUS & ABUS & 0x8000) | (~LBUS & RBUS & ~ABUS & 0x8000))? MTRUE: MFALSE;
@@ -1194,8 +1211,16 @@ read_Device(MInt *RegNo)
         dev_id = DevENDMARK;
     }
     else if (toupper(devname[0]) == 'R' && isdigit(devname[1])) {
-        dev_id = DevREG;
-        *RegNo = atoi(devname+1);
+        int regno;
+        regno = atoi(devname+1);
+        if (regno >= 0 && regno < MAX_REGS) {
+            dev_id = DevREG;
+            *RegNo = regno;
+        }
+        else {
+            error(ErrIllegalCommandOrData);
+            dev_id = DevERR;
+        }
     }
     else {
         int i;
