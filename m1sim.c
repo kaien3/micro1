@@ -12,6 +12,12 @@
  */
 //#define DEBUG
 
+#if defined(_MSC_VER)
+#define _CRT_SECURE_NO_WARNINGS         /* disable warnings for insecure libraries used */
+/*#define strtoll         _strtoi64*/   /* Visual Studio 2015 has 'strtoll' function */
+#define strcasecmp      _stricmp
+#endif
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,7 +139,7 @@ MInstWord       IR;                     /* instruction register (16bit) */
 MAddr   PC;                             /* program counter (16bit) */
 MWord   LBUS, RBUS, SBUS, ABUS, IOBUS;  /* buses (16bit) */
 MWord   R[MAX_REGS];                    /* general-purpose registers (16bit) */
-MLong   CMDR;                           /* control memory data register (40bit) */
+MCtrlWord       CMDR;                   /* control memory data register (40bit) */
 
 MCtrlWord       CM[MAX_CM];             /* control memory */
 MWord           MM[MAX_MM];             /* main memory */
@@ -908,7 +914,6 @@ execute_IO()
 {
     MInt IoCommand;     /* FOR I/O COMMAND ON IR */
     MInt IoDevice;      /* FOR I/O DEVICE NO. */
-    MInt RegNo;         /* FOR READ OR WRITE REGISTER NO. */
 
     IoCommand = (IR >> 8) & 0xff;
     IoDevice  = IR & 0xff;
@@ -1225,7 +1230,7 @@ read_Device(MInt *RegNo)
     else {
         int i;
         for (i = 0; i < DevNameTableSize; i++) {
-            if (!strncasecmp(devname, DevNameTable[i].name, BUFSIZ)) {
+            if (!strcasecmp(devname, DevNameTable[i].name)) {
                 dev_id = DevNameTable[i].id;
                 break;
             }
@@ -1350,7 +1355,6 @@ void
 trace_run()
 {
     MBool MAXUSE;
-    int i;
     char sbuf[BUFSIZ];
 
     printf(" CMAR=?");
@@ -1358,7 +1362,7 @@ trace_run()
     if (sbuf[0] == '\n' || sbuf[0] == '\0' || sbuf[0] == '.')
         return;
 
-    if (strncasecmp(sbuf, "CNT", BUFSIZ))
+    if (strcasecmp(sbuf, "CNT"))
         CMAR = strtol(sbuf, NULL, 16);
 
     if (!CMAR_address_is_OK(CMAR)) {
@@ -1409,7 +1413,6 @@ void
 run()
 {
     MBool MAXUSE;
-    int i;
     char sbuf[BUFSIZ];
 
     printf("RUN\n");
@@ -1419,7 +1422,7 @@ run()
     if (sbuf[0] == '\n' || sbuf[0] == '\0' || sbuf[0] == '.')
         return;
 
-    if (strncasecmp(sbuf, "CNT", BUFSIZ))
+    if (strcasecmp(sbuf, "CNT"))
         CMAR = strtol(sbuf, NULL, 16);
 
     if (!CMAR_address_is_OK(CMAR)) {
@@ -1506,7 +1509,7 @@ load()
         else if (sbuf[0] == 'M' && sbuf[1] == 'M') {        /* load to MM */
             while (fgets(sbuf, BUFSIZ, fp) != NULL) {
                 MAddr addr = strtoul(sbuf, NULL, 16);
-                MWord word = strtoll(sbuf+6, NULL, 16);
+                MWord word = strtoul(sbuf+6, NULL, 16) & 0xffff;
                 if (MAR_address_is_OK(addr)) {
                     MM[addr] = word;
                 }
@@ -1574,7 +1577,6 @@ dumpREG()
 void
 dumpBUS()
 {
-    int i;
     char sbuf[BUFSIZ];
     
     dump_string("LBUS RBUS ABUS SBUS IOBUS\n");
@@ -1599,7 +1601,7 @@ read_word(FILE *fp, MBool *err_flag)
             *err_flag = MTRUE;
     }
 
-    return strtol(sbuf, NULL, 16);
+    return strtol(sbuf, NULL, 16) & 0xffff;
 }
     
 /* read long long word value */
@@ -2063,7 +2065,7 @@ change_word(MWord *w)
     char sbuf[BUFSIZ];
     printf("    %04X->", *w);
     read_line(sbuf, BUFSIZ, stdin);
-    *w = strtol(sbuf, NULL, 16);
+    *w = strtol(sbuf, NULL, 16) & 0xffff;
 }
 
 /* CHANGE COMMAND */
@@ -2122,7 +2124,6 @@ change()
         case DevCM: {
             MAddr addr;
             MBool done = MFALSE;
-            char sbuf[BUFSIZ];
 
             printf("    FROM ADRS ?");
             addr = read_CM_address(stdin, NULL);
@@ -2139,7 +2140,6 @@ change()
         case DevMM: {
             MAddr addr;
             MBool done = MFALSE;
-            char sbuf[BUFSIZ];
 
             printf("    FROM ADRS ?");
             addr = read_MM_address(stdin, NULL);
