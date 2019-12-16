@@ -1,7 +1,7 @@
 /*
  *
  *      MICRO-1 simulator (ANSI C-version)
- *      by kim         Ver. 1.0b 2016.4
+ *      by kim         Ver. 1.0c 2016.4
  *
  *      based on MICRO-1 SIMULATOR (Ver. 2.1)
  *      PC-9801 CP/M-86 Turbo-Pascal version
@@ -488,10 +488,10 @@ exec_LBF()
         LBUS = R[LBF];
         break;
     case 8:     /* RB */
-        LBUS = R[((IR >> 8) & 3)];
+        LBUS = R[(IR >> 8) & 3];
         break;
     case 9:     /* RBP */
-        LBUS = R[((IR >> 8) & 3) + 1];
+        LBUS = R[((IR >> 8) + 1) & 3];
         break;
     case 10:    /* PC */
         LBUS = PC;
@@ -544,10 +544,10 @@ exec_RBF()
         RBUS = R[RBF];
         break;
     case 8:     /* RA */
-        RBUS = R[((IR >> 10) & 3)];
+        RBUS = R[(IR >> 10) & 3];
         break;
     case 9:     /* RAP */
-        RBUS = R[((IR >> 10) & 3) + 1];
+        RBUS = R[((IR >> 10) + 1) & 3];
         break;
     case 10:    /* SLT */
         RBUS = LTF;
@@ -846,16 +846,16 @@ exec_SBF()
         R[SBF] = SBUS;
         break;
     case 8:     /* SA */
-        R[((IR >> 10) & 3)] = SBUS;
+        R[(IR >> 10) & 3] = SBUS;
         break;
     case 9:     /* SAP */
-        R[((IR >> 10) & 3) + 1] = SBUS;
+        R[((IR >> 10) + 1) & 3] = SBUS;
         break;
     case 10:    /* SB */
-        R[((IR >> 8) & 3)] = SBUS;
+        R[(IR >> 8) & 3] = SBUS;
         break;
     case 11:    /* SBP */
-        R[((IR >> 8) & 3) + 1] = SBUS;
+        R[((IR >> 8) + 1) & 3] = SBUS;
         break;
     case 12:    /* PCS */
         PC = SBUS;
@@ -2103,15 +2103,6 @@ trace()
 
 /* --------------------------------------------------------------------CHANGE-- */
 
-static void
-change_word(MWord *w)
-{
-    char sbuf[BUFSIZ];
-    printf("    %04X->", *w);
-    read_line(sbuf, BUFSIZ, stdin);
-    *w = strtol(sbuf, NULL, 16) & 0xffff;
-}
-
 /* CHANGE COMMAND */
 void
 change()
@@ -2175,8 +2166,10 @@ change()
                 MCtrlWord cw;
                 printf("     %03X:%010llX->", addr, CM[addr]);
                 cw = read_long_long_word(stdin, &done);
-                CM[addr] = cw & 0xffffffffffLL;
-                addr++;
+                if (!done) {
+                    CM[addr] = cw & 0xffffffffffLL;
+                    addr++;
+                }
             }
         }
             break;
@@ -2188,9 +2181,13 @@ change()
             printf("    FROM ADRS ?");
             addr = read_MM_address(stdin, NULL);
             while (!done && MAR_address_is_OK(addr)) {
+                MWord v;
                 printf("     %04X:%04X->", addr, MM[addr]);
-                MM[addr] = read_word(stdin, &done);
-                addr++;
+                v = read_word(stdin, &done);
+                if (!done) {
+                    MM[addr] = v;
+                    addr++;
+                }
             }
         }
             break;
@@ -2358,7 +2355,7 @@ main()
     char sbuf[BUFSIZ];
 
     printf("\n"
-           "   *** MICRO-1 SIMULATOR (C-Ver. 1.0b) 2016 ***\n"
+           "   *** MICRO-1 SIMULATOR (C-Ver. 1.0c) 2016 ***\n"
            "\n");
 
     init_REG(); init_CM(); init_MM();
