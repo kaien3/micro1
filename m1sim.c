@@ -2,6 +2,7 @@
  *
  *      MICRO-1 simulator (ANSI C-version)
  *      by kim         Ver. 1.0c 2016.4
+ *      by kim         Ver. 1.0d 2017.4
  *
  *      based on MICRO-1 SIMULATOR (Ver. 2.1)
  *      PC-9801 CP/M-86 Turbo-Pascal version
@@ -2355,8 +2356,9 @@ main()
     char sbuf[BUFSIZ];
 
     printf("\n"
-           "   *** MICRO-1 SIMULATOR (C-Ver. 1.0c) 2016 ***\n"
-           "\n");
+           "   *** MICRO-1 SIMULATOR (C-Ver. 1.0d) [%s] ***\n"
+           "\n",
+           __DATE__);
 
     init_REG(); init_CM(); init_MM();
 
