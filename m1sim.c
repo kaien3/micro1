@@ -1,7 +1,7 @@
 /*
  *
  *      MICRO-1 simulator (ANSI C-version)
- *      by kim         Ver. 1.0a 2016.4
+ *      by kim         Ver. 1.0b 2016.4
  *
  *      based on MICRO-1 SIMULATOR (Ver. 2.1)
  *      PC-9801 CP/M-86 Turbo-Pascal version
@@ -846,10 +846,10 @@ exec_SBF()
         R[SBF] = SBUS;
         break;
     case 8:     /* SA */
-        R[((IR >> 12) & 3)] = SBUS;
+        R[((IR >> 10) & 3)] = SBUS;
         break;
     case 9:     /* SAP */
-        R[((IR >> 12) & 3) + 1] = SBUS;
+        R[((IR >> 10) & 3) + 1] = SBUS;
         break;
     case 10:    /* SB */
         R[((IR >> 8) & 3)] = SBUS;
@@ -2358,7 +2358,7 @@ main()
     char sbuf[BUFSIZ];
 
     printf("\n"
-           "   *** MICRO-1 SIMULATOR (C-Ver. 1.0a) 2016 ***\n"
+           "   *** MICRO-1 SIMULATOR (C-Ver. 1.0b) 2016 ***\n"
            "\n");
 
     init_REG(); init_CM(); init_MM();
