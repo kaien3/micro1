@@ -1,7 +1,7 @@
 /*
  *
  *      MICRO-1 simulator (ANSI C-version)
- *      by kim         Ver. 1.0  2016.3
+ *      by kim         Ver. 1.0a 2016.4
  *
  *      based on MICRO-1 SIMULATOR (Ver. 2.1)
  *      PC-9801 CP/M-86 Turbo-Pascal version
@@ -393,7 +393,7 @@ eval_condition(MInt TSF)
         cond = T;
         break;
     case 5:
-        cond = C? MFALSE: MTRUE;
+        cond = (C == 0)? MTRUE: MFALSE;
         break;
     case 6:
         error(ErrUndefinedMicroInst);
@@ -577,6 +577,7 @@ static void
 ADDOp()
 {
     MInt CIN;
+    int i;
 
     if (EXF == 2) {             /* ASC */
         CIN = CRY? 1: 0;
@@ -588,7 +589,24 @@ ADDOp()
         CIN = 0;
     }
 
-    ABUS = LBUS + RBUS + CIN;
+//    ABUS = LBUS + RBUS + CIN;
+    ABUS = 0;
+    for (i = 0; i < 16; i++) {
+        int b1, b2, v;
+        b1 = (LBUS >> i) & 1;
+        b2 = (RBUS >> i) & 1;
+        v = b1 + b2 + CIN;
+        if (v >= 2) {
+            v -= 2;
+            CIN = 1;
+        }
+        else {
+            CIN = 0;
+        }
+        assert(v == 0 || v == 1);
+
+        ABUS |= (v << i);
+    }
 #ifdef  DEBUG
     printf("ADDOp: LBUS=%x RBUS=%x CIN=%d => ABUS=%x\n",
            LBUS, RBUS, CIN, ABUS);
@@ -610,6 +628,7 @@ static void
 SUBOp()
 {
     MInt CIN;
+    int i;
 
     if (EXF == 2) {             /* ASC */
         CIN = CRY? 1: 0;
@@ -621,7 +640,24 @@ SUBOp()
         CIN = 0;
     }
 
-    ABUS = LBUS - RBUS - CIN;
+//    ABUS = LBUS - RBUS - CIN;
+    ABUS = 0;
+    for (i = 0; i < 16; i++) {
+        int b1, b2, v;
+        b1 = (LBUS >> i) & 1;
+        b2 = (RBUS >> i) & 1;
+        v = b1 - b2 - CIN;
+        if (v < 0) {
+            v += 2;
+            CIN = 1;
+        }
+        else {
+            CIN = 0;
+        }
+        assert(v == 0 || v == 1);
+
+        ABUS |= (v << i);
+    }
 #ifdef  DEBUG
     printf("SUBOp: LBUS=%x RBUS=%x CIN=%d => ABUS=%x\n",
            LBUS, RBUS, CIN, ABUS);
@@ -630,7 +666,7 @@ SUBOp()
     /* OV */
     OV = ((LBUS & ~RBUS & ABUS & 0x8000) | (~LBUS & RBUS & ~ABUS & 0x8000))? MTRUE: MFALSE;
     /* CRY */
-    CRY = CIN? MFALSE: MTRUE;   /* CIN? MTRUE: MFALSE ? */
+    CRY = CIN? MTRUE: MFALSE;
     /* ZER */
     ZER = ABUS? MFALSE: MTRUE;
     /* NEG */
@@ -1562,8 +1598,16 @@ dumpREG()
     }
     dump_string("\n");
 
-    sprintf(sbuf, "%03X  %04X %02X %04X %04X %s  %01X  ",
-            CMAR, MAR, C, PC, IR, to_bitstring(FSR, 6), FSR);
+    sprintf(sbuf, "%03X  %04X %02X %04X %04X %c%c%c%c%c%c  %01X  ",
+            CMAR, MAR, C, PC, IR,
+            (ZER? '1': '0'),
+            (NEG? '1': '0'),
+            (CRY? '1': '0'),
+            (OV?  '1': '0'),
+            (CZ?  '1': '0'),
+            (T?   '1': '0'),
+            FSR);
+
     dump_string(sbuf);
     for (i = 0; i < MAX_REGS; i++) {
         sprintf(sbuf, "%04X ", R[i]);
@@ -2314,7 +2358,7 @@ main()
     char sbuf[BUFSIZ];
 
     printf("\n"
-           "   *** MICRO-1 SIMULATOR (C-Ver. 1.0) 2016 ***\n"
+           "   *** MICRO-1 SIMULATOR (C-Ver. 1.0a) 2016 ***\n"
            "\n");
 
     init_REG(); init_CM(); init_MM();
@@ -2351,4 +2395,4 @@ main()
     return 0;
 }
 
-/* end of msim.c */
+/* end of m1sim.c */
