@@ -69,8 +69,8 @@ typedef struct DevNameId {
 } DevNameId;
 
 DevNameId DevNameTable[] = {
-//    { DevNULL, "NULL" },
-//    { DevREG,  "REG" },
+//    { DevNULL, "" },
+//    { DevREG,  "" },
     { DevPC,    "PC" },
     { DevIR,    "IR" },
     { DevLBUS,  "LBUS" },
@@ -89,7 +89,7 @@ DevNameId DevNameTable[] = {
     { DevRSTAR, "R*" },
     { DevBSTAR, "B*" },
     { DevENDMARK, "." },
-//    { DevERR,   "ERR" },
+//    { DevERR,   "" },
 //    { DevMAX,   "" },
 };
 
@@ -1497,8 +1497,9 @@ load()
                 else {
                     error(ErrOutOfCMAddrLimit);
                 }
-
+#ifdef  DEBUG
                 printf("%03X %010llX\n", addr, cw);
+#endif
             }
             printf(" LOADED TO CM\n");
         }
@@ -1512,8 +1513,9 @@ load()
                 else {
                     error(ErrOutOfMMAddrLimit);
                 }
-
+#ifdef  DEBUG
                 printf("%04X %04X\n", addr, word);
+#endif
             }
             printf(" LOADED TO MM\n");
         }
