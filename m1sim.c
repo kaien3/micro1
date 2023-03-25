@@ -483,6 +483,25 @@ exec_SQF()
 void
 exec_LBF()
 {
+    switch (IO_CYCLE) {
+    case IoRead: {      /* INPUT ONE CHAR FROM CARD READER IMAGE FILE */
+        int c;
+        if ((c = fgetc(INPUT)) == EOF) {
+            error(ErrNoDataOnIoDevice);
+        }
+        IOBUS = c;
+        IO_CYCLE = IoNop;
+    }
+        break;
+    case IoWrite:       /* OUTPUT ONE CHAR TO LINE PRINTER */
+        break;
+    case IoNop:
+        break;
+    default:
+        printf(" ILLEGAL IO CYCLE STATE\n");
+        break;
+    }
+
     switch (LBF) {
     case 0:    case 1:    case 2:    case 3:
     case 4:    case 5:    case 6:    case 7:     /* R0L..R7L */
@@ -904,15 +923,7 @@ exec_MMF()
 
     switch (IO_CYCLE) {
     case IoRead:        /* INPUT ONE CHAR FROM CARD READER IMAGE FILE */
-    {
-        int c;
-        if ((c = fgetc(INPUT)) == EOF) {
-            error(ErrNoDataOnIoDevice);
-        }
-        IOBUS = c;
-        IO_CYCLE = IoNop;
-    }
-    break;
+        break;
     case IoWrite:       /* OUTPUT ONE CHAR TO LINE PRINTER */
         fputc(IOBUS, OUTPUT);
         IO_CYCLE = IoNop;
