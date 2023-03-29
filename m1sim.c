@@ -2367,7 +2367,7 @@ main()
     char sbuf[BUFSIZ];
 
     printf("\n"
-           "   *** MICRO-1 SIMULATOR (C-Ver. 1.0d) [%s] ***\n"
+           "   *** MICRO-1 SIMULATOR (C-Ver. 1.0e) [%s] ***\n"
            "\n",
            __DATE__);
 
