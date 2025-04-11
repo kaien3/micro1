@@ -6,7 +6,9 @@
  *      based on MICRO-1 ASSEMBLER (Ver. 1.2)
  *      PC-9801 Turbo-Pascal version
  */
-//#define DEBUG
+#define _CRT_SECURE_NO_WARNINGS
+
+#define DEBUG
 
 #include <assert.h>
 #include <ctype.h>
@@ -21,12 +23,12 @@
 #define MAXLINESIZE     80              /* max size of line */
 #define HEXDIGITS       4
 
+#define TABLE_SIZE      100             /* size of lable table */
+
 typedef char symbol_str[MAXSYMSIZE+1];  /* type of symbol */
 typedef char name_str[MAXFNAMESIZE+1];  /* type of file name */
 typedef char line_str[MAXLINESIZE+1];   /* type of line */
 typedef char hex_str[HEXDIGITS+1];      /* type of hex number string */
-
-const int table_size = 100;    /* size of label table */
 
 typedef struct  table {                 /* type of label table */
     symbol_str  name;           /* label name */
@@ -46,8 +48,6 @@ typedef enum operation {
     title,end_op,
     err,
 } operation;    /* operation codes */
-
-int err_table[table_size];      /* error table */
 
 const symbol_str code_table[(int)end_op+1] =
 {
@@ -77,10 +77,10 @@ int     error;                  /* number of error */
      d_error : err_table;                  { duplicate error table }
      d_e_ptr : table_size;                 { duplicate error table pointer }
 */
-int d_error[table_size];        /* error table (duplicated) */
-int d_e_ptr;                    /* error table pointer (duplicated) */
+int d_error[TABLE_SIZE];        /* error table */
+int d_e_ptr;                    /* error table pointer */
 
-table label_table[table_size];  /* label table */
+table label_table[TABLE_SIZE];  /* label table */
 int table_ptr;                  /* label table pointer (actually index) */
 line_str prn_line;              /* print one line */
 
@@ -94,7 +94,6 @@ FILE *objectfile;               /* object file */
 /* open input and output files */
 void open_files()
 {
-    int n;
     char *cp;
 
     do {
@@ -110,10 +109,10 @@ void open_files()
             strncpy(&sname[0], &sname[0]+1, MAXFNAMESIZE-1);
     } while (strlen(sname) <= 0);
 
-    if ((cp = index(sname, ' ')) != NULL)
+    if ((cp = strchr(sname, ' ')) != NULL)
         *cp = '\0';
     
-    if ((cp = rindex(sname, '.')) == NULL) {
+    if ((cp = strrchr(sname, '.')) == NULL) {
         strncpy(pname, sname, MAXFNAMESIZE);
         strncpy(oname, sname, MAXFNAMESIZE);
 
@@ -121,7 +120,7 @@ void open_files()
         strncat(oname, ".b", MAXFNAMESIZE);
     }
     else {
-        int pos = sname - cp;
+        size_t pos = sname - cp;
         if (pos >= MAXFNAMESIZE-2) pos = MAXFNAMESIZE-2;
         strncpy(pname, sname, pos);
         strncpy(oname, sname, pos);
@@ -207,7 +206,7 @@ void skip_space()
 
 void skip_ch(char sc[], bool lc)
 {
-    int len = strlen(sc);
+    size_t len = strlen(sc);
 
     if (lc)
         lower_case = true;
@@ -223,7 +222,7 @@ void skip_ch(char sc[], bool lc)
             }
         }
         if (!is_matched) {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-1) {
                 prn_line[len] = ch;
                 prn_line[len+1] = '\0';
@@ -257,7 +256,7 @@ void get_hex_number(bool p)
     number = 0;
     while (isxdigit(ch)) {
         if (p) {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-1) {
                 prn_line[len] = ch;
                 prn_line[len+1] = '\0';
@@ -277,7 +276,7 @@ void get_oct_number()
 {
     number = 0;
     while (isdigit(ch) && !(ch == '8' || ch == '9')) {
-        int len = strlen(prn_line);
+        size_t len = strlen(prn_line);
         if (len <= MAXLINESIZE-1) {
             prn_line[len] = ch;
             prn_line[len+1] = '\0';
@@ -294,7 +293,7 @@ void get_bin_number()
 {
     number = 0;
     while (ch == '0' || ch == '1') {
-        int len = strlen(prn_line);
+        size_t len = strlen(prn_line);
         if (len <= MAXLINESIZE-1) {
             prn_line[len] = ch;
             prn_line[len+1] = '\0';
@@ -312,7 +311,7 @@ void get_number(bool p)
     number = 0;
     while (isdigit(ch)) {
         if (p) {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-1) {
                 prn_line[len] = ch;
                 prn_line[len+1] = '\0';
@@ -339,7 +338,7 @@ void get_unsigned_number(bool *err)
     case 'X':   /* hex number */
         read_ch();
         if (ch == '"') {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-2) {
                 prn_line[len  ] = 'X';
                 prn_line[len+1] = '"';
@@ -357,7 +356,7 @@ void get_unsigned_number(bool *err)
     case 'O':   /* octal number */
         read_ch();
         if (ch == '"') {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-2) {
                 prn_line[len  ] = 'O';
                 prn_line[len+1] = '"';
@@ -375,7 +374,7 @@ void get_unsigned_number(bool *err)
     case 'B':   /* binary number */
         read_ch();
         if (ch == '"') {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-2) {
                 prn_line[len  ] = 'B';
                 prn_line[len+1] = '"';
@@ -407,7 +406,7 @@ void get_signed_number(bool *err)
         plus = false;
 
     if (ch == '+' || ch == '-') {
-        int len = strlen(prn_line);
+        size_t len = strlen(prn_line);
         if (len <= MAXLINESIZE-1) {
             prn_line[len] = ch;
             prn_line[len+1] = '\0';
@@ -504,7 +503,7 @@ void get_const(bool *err)
         plus = false;
 
     if (ch == '+' || ch == '-') {
-        int len = strlen(prn_line);
+        size_t len = strlen(prn_line);
         if (len <= MAXLINESIZE-1) {
             prn_line[len] = ch;
             prn_line[len+1] = '\0';
@@ -531,7 +530,7 @@ void get_const(bool *err)
             sp = false;
         }
         if (ch == '"') {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-2) {
                 prn_line[len  ] = 'X';
                 prn_line[len+1] = '"';
@@ -576,7 +575,7 @@ void get_const(bool *err)
             sp = false;
         }
         if (ch == '"') {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-2) {
                 prn_line[len  ] = 'O';
                 prn_line[len+1] = '"';
@@ -621,7 +620,7 @@ void get_const(bool *err)
             sp = false;
         }
         if (ch == '"') {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-2) {
                 prn_line[len  ] = 'B';
                 prn_line[len+1] = '"';
@@ -658,7 +657,7 @@ void get_const(bool *err)
 
     case '\'':
         {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-1) {
                 prn_line[len  ] = '\'';
                 prn_line[len+1] = '\0';
@@ -668,7 +667,7 @@ void get_const(bool *err)
         lower_case = true;
         read_ch();
         if (ch != '\n' && ch != '\0') {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-1) {
                 prn_line[len  ] = '\'';
                 prn_line[len  ] = '\0';
@@ -677,7 +676,7 @@ void get_const(bool *err)
             number = ch;
             read_ch();
             if (ch != '\n' && ch != '\0') {
-                int len = strlen(prn_line);
+                size_t len = strlen(prn_line);
                 if (len <= MAXLINESIZE-1) {
                     prn_line[len  ] = '\'';
                     prn_line[len  ] = '\0';
@@ -727,7 +726,7 @@ void get_address(bool *err)
     *err = false;
 
     if (ch == '*') {
-        int len = strlen(prn_line);
+        size_t len = strlen(prn_line);
         if (len <= MAXLINESIZE-1) {
             prn_line[len  ] = ch;
             prn_line[len+1] = '\0';
@@ -739,7 +738,7 @@ void get_address(bool *err)
         if (ch == '-')
             plus = false;
         if (ch == '+' || ch == '-') {
-            int len = strlen(prn_line);
+            size_t len = strlen(prn_line);
             if (len <= MAXLINESIZE-1) {
                 prn_line[len  ] = ch;
                 prn_line[len+1] = '\0';
@@ -768,7 +767,7 @@ void get_address(bool *err)
                 plus = false;
             
             if (ch == '+' || ch == '-') {
-                int len = strlen(prn_line);
+                size_t len = strlen(prn_line);
                 if (len <= MAXLINESIZE-1) {
                     prn_line[len  ] = ch;
                     prn_line[len+1] = '\0';
@@ -991,7 +990,7 @@ void pass2()
                     rb = number;
                     skip_space();
                     if (ch == ',') {
-                        int len = strlen(prn_line);
+                        size_t len = strlen(prn_line);
                         if (len <= MAXLINESIZE-1) {
                             prn_line[len  ] = ch;
                             prn_line[len+1] = '\0';
@@ -1004,7 +1003,7 @@ void pass2()
                             ch == '(') {
 
                             if (ch == '(') {    /* without offset value */
-                                int len = strlen(prn_line);
+                                size_t len = strlen(prn_line);
                                 if (len <= MAXLINESIZE-1) {
                                     prn_line[len  ] = ch;
                                     prn_line[len+1] = '\0';
@@ -1015,7 +1014,7 @@ void pass2()
                                 get_register(&bl);
                                 skip_space();
                                 if (!bl && ch == ')') {
-                                    int len = strlen(prn_line);
+                                    size_t len = strlen(prn_line);
                                     if (len <= MAXLINESIZE-1) {
                                         prn_line[len  ] = ch;
                                         prn_line[len+1] = '\0';
@@ -1038,7 +1037,7 @@ void pass2()
                                     i = number;
                                     skip_space();
                                     if (ch == '(') {
-                                        int len = strlen(prn_line);
+                                        size_t len = strlen(prn_line);
                                         if (len <= MAXLINESIZE-1) {
                                             prn_line[len  ] = ch;
                                             prn_line[len+1] = '\0';
@@ -1049,7 +1048,7 @@ void pass2()
                                         get_register(&bl);
                                         skip_space();
                                         if (!bl && ch == ')') {
-                                            int len = strlen(prn_line);
+                                            size_t len = strlen(prn_line);
                                             if (len <= MAXLINESIZE-1) {
                                                 prn_line[len  ] = ch;
                                                 prn_line[len+1] = '\0';
@@ -1123,7 +1122,7 @@ void pass2()
                     rb = number;
                     skip_space();
                     if (ch == ',') {
-                        int len = strlen(prn_line);
+                        size_t len = strlen(prn_line);
                         if (len <= MAXLINESIZE-1) {
                             prn_line[len  ] = ch;
                             prn_line[len+1] = '\0';
@@ -1188,7 +1187,7 @@ void pass2()
                     rb = number;
                     skip_space();
                     if (ch == ',') {
-                        int len = strlen(prn_line);
+                        size_t len = strlen(prn_line);
                         if (len <= MAXLINESIZE-1) {
                             prn_line[len  ] = ch;
                             prn_line[len+1] = '\0';
@@ -1253,7 +1252,7 @@ void pass2()
                     rb = number;
                     skip_space();
                     if (ch == ',') {
-                        int len = strlen(prn_line);
+                        size_t len = strlen(prn_line);
                         if (len <= MAXLINESIZE-1) {
                             prn_line[len  ] = ch;
                             prn_line[len+1] = '\0';
@@ -1272,7 +1271,7 @@ void pass2()
                                 i = 0;
                             }
                             if (!bl && ch == '(') {
-                                int len = strlen(prn_line);
+                                size_t len = strlen(prn_line);
                                 if (len <= MAXLINESIZE-1) {
                                     prn_line[len  ] = ch;
                                     prn_line[len+1] = '\0';
@@ -1283,7 +1282,7 @@ void pass2()
                                 get_register(&bl);
                                 skip_space();
                                 if (!bl && ch == ')') {
-                                    int len = strlen(prn_line);
+                                    size_t len = strlen(prn_line);
                                     if (len <= MAXLINESIZE-1) {
                                         prn_line[len  ] = ch;
                                         prn_line[len+1] = '\0';
@@ -1341,7 +1340,7 @@ void pass2()
                     rb = number;
                     skip_space();
                     if (ch == ',') {
-                        int len = strlen(prn_line);
+                        size_t len = strlen(prn_line);
                         if (len <= MAXLINESIZE-1) {
                             prn_line[len  ] = ch;
                             prn_line[len+1] = '\0';
