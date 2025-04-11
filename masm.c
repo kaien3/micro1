@@ -6,6 +6,7 @@
  *      based on MICRO-1 MICROASSEMBLER (Ver. 3.1)
  *      PC-9801 MS-DOS Turbo-Pascal version
  */
+#define _CRT_SECURE_NO_WARNINGS
 
 #define DEBUG
 
@@ -36,7 +37,7 @@ typedef enum TOKENBS {
     U16,U17,NSQ,
 
     DTS,ZER,NEG,CRY,OV,T,CZ,U18,NTS,
-    DEX,CM1,FLS,ASC,AS1,LIR,LIO,SC,EIO,ST,RT,INA,INB,
+    DEX,CM1,FLS,ASC,AS1,LIR,LIO,SC,EXIO,ST,RT,INA,INB,
     DCB,HLT,SOV,NEX,
 
     R0,R1,R2,R3,R4,R5,R6,R7,LBUS,RBUS,
@@ -566,7 +567,7 @@ void IDNT_HANDLE()
 /* start of VAGUE_HANDLE */
 void VAGUE_HANDLE()
 {
-    int J,I,BASE,INT;
+    int J,I,INT;
     bool VAGUE;
     char LASTCH;
 
@@ -990,6 +991,7 @@ void SEARCH(REFBS REFSW)
         DEFIN = false;
     }
     UTP = BTUTABLE;
+    LASTMCP = NULL;
     while (UTP->NEXTUT != NULL && !DIS) {
         if (!strncmp(UTP->IDENT, IDENT, 8)) {
             MCP = UTP->MIDP;
@@ -1566,7 +1568,7 @@ void EX_IS_EXECUTE()
 {
     GET_TOKEN();
     if (TOKEN == IO)
-        TPMIDCODE->EX = EIO;
+        TPMIDCODE->EX = EXIO;
     else
         ERROR(13);
 }
@@ -2353,7 +2355,7 @@ void MNEEX()
         case LIR: strncpy(MNMNC, "LIR ", 4); break;
         case LIO: strncpy(MNMNC, "LIO ", 4); break;
         case SC:  strncpy(MNMNC, " SC ", 4); break;
-        case EIO: strncpy(MNMNC, "EIO ", 4); break;
+        case EXIO: strncpy(MNMNC, "EIO ", 4); break;
         case ST:  strncpy(MNMNC, " ST ", 4); break;
         case RT:  strncpy(MNMNC, " RT ", 4); break;
         case INA: strncpy(MNMNC, "INA ", 4); break;
@@ -2489,7 +2491,7 @@ void CRATMFILE()
 /* start of INPUT_SOURCE_FILE */
 void INPUT_SOURCE_FILE()
 {
-    int J;
+    size_t J;
     char *cp;
 
     ENDOPEN = false;
@@ -2524,7 +2526,7 @@ void INPUT_OPTION()
 {
     char OPTIONS[BUFSIZ];
     int I;
-    int len;
+    size_t len;
     char *cp;
 
     MODE_S = false;
