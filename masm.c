@@ -6,9 +6,11 @@
  *      based on MICRO-1 MICROASSEMBLER (Ver. 3.1)
  *      PC-9801 MS-DOS Turbo-Pascal version
  */
-#define _CRT_SECURE_NO_WARNINGS
+ //#define DEBUG
 
-#define DEBUG
+#if defined(_MSC_VER)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include <assert.h>
 #include <ctype.h>

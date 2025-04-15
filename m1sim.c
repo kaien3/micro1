@@ -197,7 +197,7 @@ static char *
 read_line(char linebuf[], int linebufsize, FILE *fp)
 {
     char *ret;
-    int len;
+    size_t len;
     if ((ret = fgets(linebuf, BUFSIZ, fp)) == NULL)
         return NULL;
 

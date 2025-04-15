@@ -6,9 +6,11 @@
  *      based on MICRO-1 ASSEMBLER (Ver. 1.2)
  *      PC-9801 Turbo-Pascal version
  */
-#define _CRT_SECURE_NO_WARNINGS
+ //#define DEBUG
 
-#define DEBUG
+#if defined(_MSC_VER)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include <assert.h>
 #include <ctype.h>
@@ -170,7 +172,7 @@ char *dec_hex(int dec)
 
 /* space */
 /*line_str space(int n)*/
-char *space(int n)
+char *space(size_t n)
 {
     static char s[MAXLINESIZE+1];
     assert(n <= MAXLINESIZE);
