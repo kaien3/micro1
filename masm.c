@@ -738,8 +738,11 @@ void GET_TOKEN()
         }
         else {
             TOKEN = EOST;
+#if !defined(_MSC_VER)
+            /* for non-MS (DOS) environment, read one more byte at End-Of-Line */
             CH = fgetc(SIFP);
             CH = toupper(CH);
+#endif
             if (MODE_S)
                 fprintf(SOFP, "\n");
             CH = fgetc(SIFP);
