@@ -20,9 +20,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAXSYMSIZE      8               /* max size of symbol */
-#define MAXFNAMESIZE    14              /* max size of file name */
+/* max number of bytes for filename */
+#ifndef MAX_PATH
+#define MAX_PATH        256
+#endif
+
+//#define MAXFNAMESIZE    14              /* max size of file name */
+#define MAXFNAMESIZE    (MAX_PATH+1)    /* max size of file name */
 #define MAXLINESIZE     80              /* max size of line */
+#define MAXSYMSIZE      8               /* max size of symbol */
 #define HEXDIGITS       4
 
 #define TABLE_SIZE      100             /* size of lable table */
